@@ -4,6 +4,7 @@ import Quill from "quill";
 import "quill/dist/quill.snow.css";
 import { io, Socket } from "socket.io-client";
 import { useParams } from "react-router-dom";
+import "./styles.css";
 
 const SAVE_INTERAL_MS = 2000;
 const TOOLBAR_OPTIONS = [
@@ -31,6 +32,24 @@ export default function TextEditor() {
       s.disconnect();
     };
   }, []);
+
+  useEffect(() => {
+    if (socket == null) return;
+
+    const username = localStorage.getItem("username");
+    if (username) {
+      socket.emit("add-document", documentId, username);
+
+      // Обработка ответа сервера
+      socket.on("document-added", (data) => {
+        console.log(data.message); // "Document successfully added to user"
+      });
+
+      socket.on("error", (error) => {
+        console.error(error.message);
+      });
+    }
+  }, [documentId, socket]);
 
   useEffect(() => {
     if (socket == null || quill == null) return;
@@ -65,7 +84,7 @@ export default function TextEditor() {
     socket.on("recieve-changes", handler);
 
     return () => {
-      quill.off("recieve-changes", handler);
+      socket.off("recieve-changes", handler);
     };
   }, [socket, quill]);
 
@@ -86,17 +105,19 @@ export default function TextEditor() {
   const wrapperRef = useCallback((wrapper) => {
     if (wrapper == null) return;
 
-    wrapper.innerHTML = "";
+    wrapper.innerHTML = ""; // Очистка wrapper
     const editor = document.createElement("div");
     wrapper.append(editor);
-    const q = new Quill("#container", {
+
+    const q = new Quill(editor, {
       theme: "snow",
       modules: { toolbar: TOOLBAR_OPTIONS },
     });
+
     q.enable(false);
     q.setText("Loading...");
     setQuill(q);
   }, []);
 
-  return <div id="container" className="container" ref={wrapperRef}></div>;
+  return <div className="container" ref={wrapperRef}></div>;
 }
