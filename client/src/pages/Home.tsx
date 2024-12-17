@@ -1,7 +1,7 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import TextEditor from '../components/TextEditor.tsx';
-import '../styles.css';
+import React from "react";
+import { Link } from "react-router-dom";
+import TextEditor from "../components/TextEditor/index.js";
+import "../styles.css";
 
 function Home() {
   return (
